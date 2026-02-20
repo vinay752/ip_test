@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cherry OS - Pro Streamer</title>
+    <title>LivePro - Cherry Edition</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary: #ff2d55; /* Cherry Red */
-            --bg-dark: #050505;
-            --bg-card: #121212;
-            --text-main: #ffffff;
-            --text-dim: #888888;
+            --primary: #ff2d55;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f1f5f9;
+            --text-dim: #94a3b8;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -19,57 +19,50 @@
         body {
             background-color: var(--bg-dark);
             color: var(--text-main);
-            font-family: 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, sans-serif;
             display: flex; flex-direction: column; align-items: center;
             min-height: 100vh; padding: 20px;
         }
 
-        .container { width: 100%; max-width: 1000px; display: flex; flex-direction: column; gap: 20px; }
+        .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 24px; }
 
-        header {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 0; border-bottom: 1px solid #222;
-        }
+        header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
 
-        .logo-box { display: flex; align-items: center; gap: 12px; }
-        .logo-icon { color: var(--primary); font-size: 24px; text-shadow: 0 0 10px var(--primary); }
-        .logo-text { font-weight: 900; font-size: 1.4rem; letter-spacing: 1px; }
+        .logo-text { font-size: 1.25rem; font-weight: 900; letter-spacing: -1px; }
 
         #status-badge {
-            font-size: 10px; font-weight: 800; color: var(--primary);
-            border: 1px solid var(--primary); padding: 4px 12px; border-radius: 20px;
-            text-transform: uppercase; box-shadow: 0 0 10px rgba(255, 45, 85, 0.2);
+            font-size: 10px; font-weight: 700; color: var(--primary);
+            background: rgba(255, 45, 85, 0.1); padding: 4px 12px;
+            border-radius: 999px; border: 1px solid rgba(255, 45, 85, 0.2);
+            text-transform: uppercase;
         }
 
-        /* Player Styling */
         .player-wrapper {
-            position: relative; background: #000; border-radius: 20px;
+            position: relative; background-color: #000; border-radius: 24px;
             overflow: hidden; aspect-ratio: 16 / 9; width: 100%;
-            border: 1px solid #222; box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        video { width: 100%; height: 100%; outline: none; }
+        video { width: 100%; height: 100%; }
 
         .overlay {
             position: absolute; inset: 0; display: flex;
-            justify-content: center; align-items: center; z-index: 10;
-            background: rgba(0,0,0,0.6);
+            justify-content: center; align-items: center; z-index: 20;
+            background: rgba(0,0,0,0.7);
         }
 
         .spinner {
-            width: 50px; height: 50px; border: 3px solid rgba(255,255,255,0.1);
+            width: 40px; height: 40px; border: 3px solid rgba(255, 255, 255, 0.1);
             border-top: 3px solid var(--primary); border-radius: 50%;
-            animation: spin 1s linear infinite;
+            animation: spin 0.8s linear infinite;
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
         .info-card {
-            background: var(--bg-card); padding: 25px; border-radius: 20px;
-            border: 1px solid #222; margin-top: 10px;
+            background: var(--bg-card); padding: 20px; border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
         }
-
-        .video-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 5px; }
-        .video-status { font-size: 0.9rem; color: var(--text-dim); }
 
         .hidden { display: none !important; }
     </style>
@@ -78,84 +71,78 @@
 
     <div class="container">
         <header>
-            <div class="logo-box">
-                <i class="fas fa-🍒 logo-icon"></i>
-                <h1 class="logo-text">CHERRY<span style="color:var(--primary)">PRO</span></h1>
-            </div>
+            <div class="logo-text">CHERRY<span style="color:var(--primary)">PRO</span></div>
             <div id="status-badge">Awaiting Signal</div>
         </header>
 
         <div class="player-wrapper">
-            <video id="v-element" crossorigin="anonymous" controls autoplay muted></video>
+            <video id="v-element" crossorigin="anonymous" controls autoplay muted playsinline></video>
             
-            <div id="v-loader" class="overlay hidden">
+            <div id="v-loader" class="overlay">
                 <div class="spinner"></div>
             </div>
         </div>
 
         <div class="info-card">
-            <h2 id="display-name" class="video-title">No Channel Loaded</h2>
-            <p id="display-status" class="video-status">Please select a stream from the bot results.</p>
+            <h2 id="v-title" style="margin-bottom: 5px;">Initializing...</h2>
+            <p id="v-status" style="color: var(--text-dim); font-size: 0.9rem;">Checking CSV database...</p>
         </div>
     </div>
 
     <script>
-        // --- 1. THE DATA VAULT ---
-        // Your CSV data stays here, hidden from the UI
-        const csvRawData = `Name,URL
+        // --- 1. DATA ---
+        const csvData = `Name,URL
 Epic Sunset,https://www.w3schools.com/html/mov_bbb.mp4
 City Lights,https://www.w3schools.com/html/movie.mp4
 Deep Sea,https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4`;
 
-        // --- 2. LOGIC ENGINE ---
-        const player = document.getElementById('v-element');
-        const loader = document.getElementById('v-loader');
-        const statusBadge = document.getElementById('status-badge');
-        const nameLabel = document.getElementById('display-name');
-        const statusLabel = document.getElementById('display-status');
-
-        function parseCSV(csv) {
-            const lines = csv.split('\n');
-            const result = [];
-            for (let i = 1; i < lines.length; i++) {
-                const parts = lines[i].split(',');
-                if (parts.length >= 2) result.push({ name: parts[0].trim(), url: parts[1].trim() });
-            }
-            return result;
+        // --- 2. ENGINE ---
+        function parseCSV(data) {
+            return data.split('\n').slice(1).map(line => {
+                const [name, url] = line.split(',');
+                return { name: name?.trim(), url: url?.trim() };
+            });
         }
 
-        function initCherryPlayer() {
-            const videoData = parseCSV(csvRawData);
+        window.onload = () => {
+            const player = document.getElementById('v-element');
+            const loader = document.getElementById('v-loader');
+            const title = document.getElementById('v-title');
+            const status = document.getElementById('v-status');
+            const badge = document.getElementById('status-badge');
+
             const params = new URLSearchParams(window.location.search);
-            const targetName = params.get('name');
+            const target = params.get('name');
 
-            if (targetName) {
-                const video = videoData.find(v => v.name.toLowerCase() === targetName.toLowerCase());
+            const db = parseCSV(csvData);
+            const video = db.find(v => v.name?.toLowerCase() === target?.toLowerCase());
 
-                if (video) {
-                    loader.classList.remove('hidden');
-                    nameLabel.textContent = video.name;
-                    statusLabel.textContent = "Establishing secure connection...";
-                    statusBadge.textContent = "LIVE";
+            if (video) {
+                title.textContent = video.name;
+                status.textContent = "Stream found. Booting engine...";
+                badge.textContent = "LIVE";
 
-                    player.src = video.url;
-                    player.load();
-                    player.play().then(() => {
+                player.src = video.url;
+                
+                // Force load and play
+                player.load();
+                player.play()
+                    .then(() => {
                         loader.classList.add('hidden');
-                        statusLabel.textContent = "Stream active via Cherry Tunnel.";
-                    }).catch(() => {
+                        status.textContent = "Secure connection established.";
+                    })
+                    .catch(() => {
                         loader.classList.add('hidden');
-                        statusLabel.textContent = "Autoplay blocked. Tap to play.";
+                        status.textContent = "Autoplay blocked. Tap play to start.";
                     });
-                } else {
-                    nameLabel.textContent = "Stream Not Found";
-                    statusLabel.textContent = `Error: "${targetName}" is not in the database.`;
-                    statusBadge.textContent = "OFFLINE";
-                }
+            } else {
+                loader.classList.add('hidden');
+                title.textContent = target ? "Not Found" : "No Stream Selected";
+                status.textContent = target ? `"${target}" is not in the CSV list.` : "Please use a valid query link.";
+                badge.textContent = "OFFLINE";
+                badge.style.color = "#ef4444";
             }
-        }
-
-        window.onload = initCherryPlayer;
+        };
     </script>
 </body>
 </html>
