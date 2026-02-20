@@ -6,65 +6,138 @@
     <title>LivePro - Cherry Edition</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root { --cherry: #ff2d55; --bg: #05070a; --card: #0f1218; --text: #f8fafc; --dim: #64748b; }
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
-        .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 20px; }
-        header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        .logo-text { font-size: 1.4rem; font-weight: 900; letter-spacing: -0.02em; }
-        #status-badge { font-size: 10px; font-weight: 800; color: var(--cherry); border: 1px solid var(--cherry); padding: 4px 12px; border-radius: 20px; text-transform: uppercase; }
-        
-        /* The Player Wrapper */
-        .player-wrapper { position: relative; background: #000; border-radius: 28px; overflow: hidden; aspect-ratio: 16 / 9; width: 100%; border: 1px solid rgba(255, 255, 255, 0.05); cursor: pointer; }
-        video { width: 100%; height: 100%; object-fit: contain; }
+        :root {
+            --cherry: #ff2d55;
+            --bg: #05070a;
+            --card: #0f1218;
+            --text: #f8fafc;
+            --dim: #64748b;
+        }
 
-        /* Loader Overlay */
-        .overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 20; background: rgba(0,0,0,0.8); transition: 0.3s; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; padding: 20px;
+        }
+
+        .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 20px; }
+
+        header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .logo-box { display: flex; align-items: center; gap: 10px; }
+        .logo-icon { color: var(--cherry); font-size: 22px; text-shadow: 0 0 15px var(--cherry); }
+        .logo-text { font-size: 1.4rem; font-weight: 900; letter-spacing: -0.02em; }
+
+        #status-badge {
+            font-size: 10px; font-weight: 800; color: var(--cherry);
+            background: rgba(255, 45, 85, 0.1); border: 1px solid var(--cherry);
+            padding: 4px 12px; border-radius: 20px; text-transform: uppercase;
+        }
+
+        /* Player Wrapper */
+        .player-wrapper {
+            position: relative; background: #000; border-radius: 28px;
+            overflow: hidden; aspect-ratio: 16 / 9; width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.7);
+        }
+
+        video { width: 100%; height: 100%; cursor: pointer; }
+
+        /* Overlays */
+        .overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 20; background: rgba(0,0,0,0.7); transition: 0.3s; }
         .hidden { opacity: 0; pointer-events: none; }
-        .spinner { width: 50px; height: 50px; border: 3px solid rgba(255, 255, 255, 0.1); border-top: 3px solid var(--cherry); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 15px; }
+
+        .spinner {
+            width: 45px; height: 45px; border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid var(--cherry); border-radius: 50%;
+            animation: spin 0.8s linear infinite; margin-bottom: 10px;
+        }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* Controls */
-        .controls-layer { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; background: linear-gradient(transparent, rgba(0,0,0,0.9)); z-index: 30; opacity: 0; transition: 0.3s; }
+        /* Professional Controls Layer */
+        .controls-layer {
+            position: absolute; bottom: 0; left: 0; right: 0; padding: 20px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.9));
+            z-index: 30; opacity: 0; transition: opacity 0.3s;
+        }
         .player-wrapper:hover .controls-layer { opacity: 1; }
-        .controls-bar { display: flex; justify-content: space-between; align-items: center; background: rgba(15, 18, 24, 0.8); backdrop-filter: blur(10px); padding: 12px 24px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1); }
-        button { background: none; border: none; color: var(--text); cursor: pointer; font-size: 18px; }
 
-        .info-card { background-color: var(--card); padding: 25px; border-radius: 28px; border: 1px solid rgba(255, 255, 255, 0.03); text-align: center; }
+        .controls-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(15, 18, 24, 0.8); backdrop-filter: blur(15px);
+            padding: 12px 24px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .controls-left, .controls-right { display: flex; align-items: center; gap: 15px; }
+
+        button { background: none; border: none; color: var(--dim); cursor: pointer; font-size: 18px; transition: 0.2s; }
+        button:hover { color: var(--cherry); }
+
+        .live-badge { display: flex; align-items: center; gap: 6px; color: #ff4d4d; font-weight: 800; font-size: 11px; text-transform: uppercase; }
+        .live-dot { width: 6px; height: 6px; background: #ff4d4d; border-radius: 50%; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        input[type=range] { accent-color: var(--cherry); cursor: pointer; width: 70px; }
+
+        /* Info Display */
+        .info-card {
+            background-color: var(--card); padding: 20px; border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.03); text-align: center;
+        }
+
+        .video-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 5px; }
+        .video-status { font-size: 0.9rem; color: var(--dim); }
     </style>
 </head>
 <body>
 
     <div class="container">
         <header>
-            <div class="logo-text">CHERRY<span style="color:var(--cherry)">PRO</span></div>
+            <div class="logo-box">
+                <i class="fas fa-circle-play logo-icon"></i>
+                <h1 class="logo-text">CHERRY<span style="color:var(--cherry)">PRO</span></h1>
+            </div>
             <div id="status-badge">STANDBY</div>
         </header>
 
         <div id="video-scope" class="player-wrapper">
-            <video id="v-element" crossorigin="anonymous" playsinline muted></video>
+            <video id="v-element" crossorigin="anonymous" playsinline autoplay muted></video>
 
             <div id="v-loader" class="overlay">
                 <div class="spinner"></div>
-                <p id="loader-text" style="font-size: 12px; color: var(--cherry); font-weight: bold; letter-spacing: 1px;">TAP TO SYNC STREAM</p>
+                <p style="font-size: 11px; color: var(--cherry); font-weight: 800; letter-spacing: 1px;">INITIALIZING TUNNEL</p>
             </div>
 
             <div class="controls-layer">
                 <div class="controls-bar">
-                    <button id="v-play-btn"><i class="fas fa-play"></i></button>
-                    <button id="v-mute"><i class="fas fa-volume-mute"></i></button>
-                    <button id="v-full"><i class="fas fa-expand"></i></button>
+                    <div class="controls-left">
+                        <button id="v-play-btn"><i class="fas fa-play"></i></button>
+                        <div class="live-badge"><span class="live-dot"></span>Live</div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <button id="v-mute"><i class="fas fa-volume-up"></i></button>
+                            <input type="range" id="v-vol" min="0" max="1" step="0.1" value="1">
+                        </div>
+                    </div>
+                    <div class="controls-right">
+                        <button id="v-pip"><i class="fas fa-clone"></i></button>
+                        <button id="v-full"><i class="fas fa-expand"></i></button>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="info-card">
-            <h2 id="display-name" style="font-size: 1.5rem; margin-bottom: 5px;">No Data</h2>
-            <p id="display-status" style="color: var(--dim); font-size: 0.9rem;">Initializing Cherry OS...</p>
+            <h2 id="display-name" class="video-title">No Video Loaded</h2>
+            <p id="display-status" class="video-status">Waiting for signal from the bot...</p>
         </div>
     </div>
 
     <script>
+        // --- CSV DATA ---
         const csvRawData = `Name,URL
 Epic Sunset,https://www.w3schools.com/html/mov_bbb.mp4
 City Lights,https://www.w3schools.com/html/movie.mp4
@@ -72,10 +145,12 @@ Deep Sea,https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp
 
         const player = document.getElementById('v-element');
         const loader = document.getElementById('v-loader');
-        const statusBadge = document.getElementById('status-badge');
+        const playBtn = document.getElementById('v-play-btn');
+        const muteBtn = document.getElementById('v-mute');
+        const volIn = document.getElementById('v-vol');
         const nameLabel = document.getElementById('display-name');
         const statusLabel = document.getElementById('display-status');
-        const playBtn = document.getElementById('v-play-btn');
+        const statusBadge = document.getElementById('status-badge');
 
         function parseCSV(csv) {
             return csv.split('\n').slice(1).map(line => {
@@ -84,37 +159,38 @@ Deep Sea,https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp
             });
         }
 
-        // --- THE ENGINE ---
-        function bootStream(url) {
+        async function startStream(url, name) {
+            loader.classList.remove('hidden');
+            statusBadge.textContent = "SYNCING";
+            
             player.pause();
             player.src = url;
-            player.load(); // Forces reset of the media pipeline
+            player.load();
 
-            // Attempt muted autoplay
-            let playPromise = player.play();
-
-            if (playPromise !== undefined) {
-                playPromise.then(() => {
-                    loader.classList.add('hidden');
-                    statusBadge.textContent = "LIVE";
-                    playBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                }).catch(() => {
-                    // Blocked! Loader stays visible and becomes the "Start" button
-                    statusBadge.textContent = "LOCKED";
-                    document.getElementById('loader-text').textContent = "TAP TO START STREAM";
+            try {
+                await player.play();
+                onSuccess(name);
+            } catch (err) {
+                // Autoplay block handler
+                player.muted = true;
+                await player.play().catch(() => {
+                    statusLabel.textContent = "Autoplay blocked. Tap Play button.";
+                    playBtn.innerHTML = '<i class="fas fa-play"></i>';
                 });
+                onSuccess(name);
             }
         }
 
-        // --- GLOBAL TOUCH FIX ---
-        // This is the most important part. Browsers unlock audio/video on any click.
-        loader.addEventListener('click', () => {
-            player.muted = false; // Unmute on click
-            player.play();
+        function onSuccess(name) {
             loader.classList.add('hidden');
             statusBadge.textContent = "LIVE";
-        });
+            statusBadge.style.color = "var(--cherry)";
+            nameLabel.textContent = name;
+            statusLabel.textContent = "Cherry Proxy established successfully.";
+            playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        }
 
+        // URL QUERY LOGIC
         window.onload = () => {
             const db = parseCSV(csvRawData);
             const params = new URLSearchParams(window.location.search);
@@ -123,31 +199,33 @@ Deep Sea,https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp
             if (target) {
                 const video = db.find(v => v.name.toLowerCase() === target.toLowerCase());
                 if (video) {
-                    nameLabel.textContent = video.name;
-                    statusLabel.textContent = "Link found. Ready for playback.";
-                    bootStream(video.url);
+                    startStream(video.url, video.name);
                 } else {
-                    statusLabel.textContent = "Error: Name not found in CSV.";
+                    statusLabel.textContent = "Error: Stream not found in CSV.";
                     loader.classList.add('hidden');
                 }
             }
         };
 
-        // UI Controls
+        // CONTROLS
         playBtn.onclick = () => {
             if (player.paused) { player.play(); playBtn.innerHTML = '<i class="fas fa-pause"></i>'; }
             else { player.pause(); playBtn.innerHTML = '<i class="fas fa-play"></i>'; }
         };
-        
-        document.getElementById('v-mute').onclick = (e) => {
+
+        muteBtn.onclick = () => {
             player.muted = !player.muted;
-            e.target.innerHTML = player.muted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
+            muteBtn.innerHTML = player.muted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
         };
 
+        volIn.oninput = (e) => { player.volume = e.target.value; player.muted = false; };
+
         document.getElementById('v-full').onclick = () => {
-            if (player.requestFullscreen) player.requestFullscreen();
-            else if (player.webkitRequestFullscreen) player.webkitRequestFullscreen();
+            if (!document.fullscreenElement) document.getElementById('video-scope').requestFullscreen();
+            else document.exitFullscreen();
         };
+
+        document.getElementById('v-pip').onclick = () => { player.requestPictureInPicture(); };
     </script>
 </body>
 </html>
