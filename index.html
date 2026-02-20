@@ -82,40 +82,56 @@
     </div>
 
     <script type="py" config='{"packages": ["pandas", "pyodide-http"]}'>
-        import pandas as pd
-        from pyodide.http import open_url
-        from pyscript import window, display
-        import js
+import pandas as pd
+from pyodide.http import open_url
+from pyscript import window
+import js
 
-        def run_cherry_engine():
-            try:
-                # 1. Update Status
-                window.statusBadge.textContent = "Syncing DB"
-                
-                # 2. Load the 11,000+ line CSV (Assume it's in the same folder)
-                csv_url = "./channels.csv" 
-                df = pd.read_csv(open_url(csv_url))
-                
-                # 3. Get name from URL ?name=Channel
-                params = window.URLSearchParams.new(window.location.search)
-                target = params.get('name')
-                
-                if target:
-                    # Python's powerful filtering for 11k rows
-                    match = df[df['Name'].str.contains(target, case=False, na=False)].iloc[0]
-                    
-                    # 4. Hand off to the JS player
-                    js.initStream(match['URL'], match['Name'])
-                else:
-                    window.nameLabel.textContent = "Awaiting Signal"
-                    window.loader.classList.add('hidden')
-            except Exception as e:
-                window.nameLabel.textContent = "CSV Error"
-                window.statusBadge.textContent = "Error"
-                print(f"Engine Error: {e}")
+def run_cherry_engine():
+    # --- PROXY LINKING ---
+    # We grab the elements from the JS window explicitly to avoid AttributeErrors
+    status_badge = window.document.getElementById('status-badge')
+    name_label = window.document.getElementById('display-name')
+    v_loader = window.document.getElementById('v-loader')
 
-        run_cherry_engine()
-    </script>
+    try:
+        if status_badge:
+            status_badge.textContent = "Syncing DB"
+        
+        # Load the CSV
+        csv_url = "./channels.csv" 
+        df = pd.read_csv(open_url(csv_url))
+        
+        # Get query param
+        params = window.URLSearchParams.new(window.location.search)
+        target = params.get('name')
+        
+        if target:
+            # Search logic
+            match = df[df['Name'].str.contains(target, case=False, na=False)].head(1)
+            
+            if not match.empty:
+                stream_url = match['URL'].values[0]
+                stream_name = match['Name'].values[0]
+                
+                # Hand off to your Javascript function
+                js.initStream(stream_url, stream_name)
+            else:
+                if name_label:
+                    name_label.textContent = "Channel Not Found"
+                if v_loader:
+                    v_loader.classList.add('hidden')
+        else:
+            if v_loader:
+                v_loader.classList.add('hidden')
+
+    except Exception as e:
+        if name_label:
+            name_label.textContent = "Engine Error"
+        print(f"Engine Error: {e}")
+
+run_cherry_engine()
+</script>
 
     <script>
         // Global JS references for PyScript to access
