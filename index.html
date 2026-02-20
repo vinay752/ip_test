@@ -3,94 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LivePro - Cherry Edition</title>
+    <title>CherryTV - Premium Streaming</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
+
         :root {
             --cherry: #ff2d55;
-            --bg: #05070a;
-            --card: #0f1218;
-            --text: #f8fafc;
-            --dim: #64748b;
+            --cherry-glow: rgba(255, 45, 85, 0.4);
+            --bg: #030407;
+            --surface: #0a0c12;
+            --glass: rgba(15, 18, 24, 0.6);
+            --text: #ffffff;
+            --dim: #94a3b8;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
             background-color: var(--bg);
+            background-image: radial-gradient(circle at top right, rgba(255, 45, 85, 0.05), transparent);
             color: var(--text);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             display: flex; flex-direction: column; align-items: center;
-            min-height: 100vh; padding: 20px;
+            min-height: 100vh; padding: 25px;
         }
 
-        .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 20px; }
+        .container { width: 100%; max-width: 950px; display: flex; flex-direction: column; gap: 28px; }
 
+        /* Header Styling */
         header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        .logo-box { display: flex; align-items: center; gap: 10px; }
-        .logo-icon { color: var(--cherry); font-size: 22px; text-shadow: 0 0 15px var(--cherry); }
-        .logo-text { font-size: 1.4rem; font-weight: 900; letter-spacing: -0.02em; }
+        .logo-box { display: flex; align-items: center; gap: 12px; }
+        .logo-icon { 
+            color: var(--cherry); font-size: 26px; 
+            filter: drop-shadow(0 0 8px var(--cherry-glow));
+        }
+        .logo-text { 
+            font-size: 1.6rem; font-weight: 800; letter-spacing: -1.5px; 
+            background: linear-gradient(to right, #fff, var(--dim));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
 
         #status-badge {
-            font-size: 10px; font-weight: 800; color: var(--cherry);
-            background: rgba(255, 45, 85, 0.1); border: 1px solid var(--cherry);
-            padding: 4px 12px; border-radius: 20px; text-transform: uppercase;
+            font-size: 9px; font-weight: 800; color: #fff;
+            background: var(--cherry); padding: 5px 14px; 
+            border-radius: 50px; text-transform: uppercase; letter-spacing: 1px;
+            box-shadow: 0 0 15px var(--cherry-glow);
         }
 
-        /* Player Wrapper */
+        /* The Aesthetic Player Wrapper */
         .player-wrapper {
-            position: relative; background: #000; border-radius: 28px;
+            position: relative; background: #000; border-radius: 32px;
             overflow: hidden; aspect-ratio: 16 / 9; width: 100%;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.8);
         }
 
-        video { width: 100%; height: 100%; cursor: pointer; }
+        video { width: 100%; height: 100%; object-fit: cover; }
 
-        /* Overlays */
-        .overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 20; background: rgba(0,0,0,0.7); transition: 0.3s; }
+        /* Loader Overlay */
+        .overlay { 
+            position: absolute; inset: 0; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; z-index: 20; 
+            background: var(--bg); transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
         .hidden { opacity: 0; pointer-events: none; }
 
         .spinner {
-            width: 45px; height: 45px; border: 3px solid rgba(255, 255, 255, 0.1);
-            border-top: 3px solid var(--cherry); border-radius: 50%;
-            animation: spin 0.8s linear infinite; margin-bottom: 10px;
+            width: 50px; height: 50px; border: 2px solid rgba(255, 255, 255, 0.05);
+            border-top: 2px solid var(--cherry); border-radius: 50%;
+            animation: spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* Professional Controls Layer */
+        /* Aesthetic Control Bar */
         .controls-layer {
-            position: absolute; bottom: 0; left: 0; right: 0; padding: 20px;
-            background: linear-gradient(transparent, rgba(0,0,0,0.9));
-            z-index: 30; opacity: 0; transition: opacity 0.3s;
+            position: absolute; bottom: 0; left: 0; right: 0; padding: 25px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            z-index: 30; opacity: 0; transition: 0.4s;
         }
         .player-wrapper:hover .controls-layer { opacity: 1; }
 
         .controls-bar {
             display: flex; justify-content: space-between; align-items: center;
-            background: rgba(15, 18, 24, 0.8); backdrop-filter: blur(15px);
-            padding: 12px 24px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--glass); backdrop-filter: blur(25px) saturate(180%);
+            padding: 14px 28px; border-radius: 24px; 
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .controls-left, .controls-right { display: flex; align-items: center; gap: 15px; }
+        .controls-left, .controls-right { display: flex; align-items: center; gap: 22px; }
 
-        button { background: none; border: none; color: var(--dim); cursor: pointer; font-size: 18px; transition: 0.2s; }
-        button:hover { color: var(--cherry); }
+        button { 
+            background: none; border: none; color: #fff; 
+            cursor: pointer; font-size: 20px; transition: 0.3s; 
+            opacity: 0.8;
+        }
+        button:hover { opacity: 1; transform: translateY(-1px); color: var(--cherry); }
 
-        .live-badge { display: flex; align-items: center; gap: 6px; color: #ff4d4d; font-weight: 800; font-size: 11px; text-transform: uppercase; }
-        .live-dot { width: 6px; height: 6px; background: #ff4d4d; border-radius: 50%; animation: pulse 1.5s infinite; }
+        .live-badge { 
+            display: flex; align-items: center; gap: 8px; color: var(--cherry); 
+            font-weight: 800; font-size: 11px; text-transform: uppercase; 
+        }
+        .live-dot { width: 6px; height: 6px; background: var(--cherry); border-radius: 50%; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
-        input[type=range] { accent-color: var(--cherry); cursor: pointer; width: 70px; }
-
-        /* Info Display */
-        .info-card {
-            background-color: var(--card); padding: 20px; border-radius: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.03); text-align: center;
+        input[type=range] { 
+            accent-color: var(--cherry); cursor: pointer; width: 70px; 
+            filter: drop-shadow(0 0 5px var(--cherry-glow));
         }
 
-        .video-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 5px; }
-        .video-status { font-size: 0.9rem; color: var(--dim); }
+        /* Minimalist Info Display */
+        .info-card {
+            background-color: var(--surface); padding: 30px; border-radius: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.03); text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .video-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -1px; }
+        .video-subtitle { font-size: 12px; font-weight: 600; color: var(--dim); text-transform: uppercase; letter-spacing: 2px; }
     </style>
 </head>
 <body>
@@ -98,10 +128,10 @@
     <div class="container">
         <header>
             <div class="logo-box">
-                <i class="fas fa-circle-play logo-icon"></i>
-                <h1 class="logo-text">CHERRY<span style="color:var(--cherry)">PRO</span></h1>
+                <i class="fas fa-play logo-icon"></i>
+                <h1 class="logo-text">CherryTV</h1>
             </div>
-            <div id="status-badge">STANDBY</div>
+            <div id="status-badge">Establishing...</div>
         </header>
 
         <div id="video-scope" class="player-wrapper">
@@ -109,7 +139,6 @@
 
             <div id="v-loader" class="overlay">
                 <div class="spinner"></div>
-                <p style="font-size: 11px; color: var(--cherry); font-weight: 800; letter-spacing: 1px;">INITIALIZING TUNNEL</p>
             </div>
 
             <div class="controls-layer">
@@ -117,7 +146,7 @@
                     <div class="controls-left">
                         <button id="v-play-btn"><i class="fas fa-play"></i></button>
                         <div class="live-badge"><span class="live-dot"></span>Live</div>
-                        <div style="display:flex; align-items:center; gap:8px;">
+                        <div style="display:flex; align-items:center; gap:12px;">
                             <button id="v-mute"><i class="fas fa-volume-up"></i></button>
                             <input type="range" id="v-vol" min="0" max="1" step="0.1" value="1">
                         </div>
@@ -131,13 +160,13 @@
         </div>
 
         <div class="info-card">
-            <h2 id="display-name" class="video-title">No Video Loaded</h2>
-            <p id="display-status" class="video-status">Waiting for signal from the bot...</p>
+            <p class="video-subtitle">Currently Streaming</p>
+            <h2 id="display-name" class="video-title">No Channel Loaded</h2>
         </div>
     </div>
 
     <script>
-        // --- CSV DATA ---
+        // --- DATA SOURCE ---
         const csvRawData = `Name,URL
 Epic Sunset,https://www.w3schools.com/html/mov_bbb.mp4
 City Lights,https://www.w3schools.com/html/movie.mp4
@@ -149,7 +178,6 @@ Deep Sea,https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp
         const muteBtn = document.getElementById('v-mute');
         const volIn = document.getElementById('v-vol');
         const nameLabel = document.getElementById('display-name');
-        const statusLabel = document.getElementById('display-status');
         const statusBadge = document.getElementById('status-badge');
 
         function parseCSV(csv) {
@@ -159,9 +187,9 @@ Deep Sea,https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp
             });
         }
 
-        async function startStream(url, name) {
+        async function initStream(url, name) {
             loader.classList.remove('hidden');
-            statusBadge.textContent = "SYNCING";
+            statusBadge.textContent = "Syncing";
             
             player.pause();
             player.src = url;
@@ -169,28 +197,19 @@ Deep Sea,https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp
 
             try {
                 await player.play();
-                onSuccess(name);
+                statusBadge.textContent = "Live";
+                loader.classList.add('hidden');
+                nameLabel.textContent = name;
+                playBtn.innerHTML = '<i class="fas fa-pause"></i>';
             } catch (err) {
-                // Autoplay block handler
-                player.muted = true;
-                await player.play().catch(() => {
-                    statusLabel.textContent = "Autoplay blocked. Tap Play button.";
-                    playBtn.innerHTML = '<i class="fas fa-play"></i>';
-                });
-                onSuccess(name);
+                // Handle autoplay block
+                loader.classList.add('hidden');
+                nameLabel.textContent = name;
+                playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                statusBadge.textContent = "Paused";
             }
         }
 
-        function onSuccess(name) {
-            loader.classList.add('hidden');
-            statusBadge.textContent = "LIVE";
-            statusBadge.style.color = "var(--cherry)";
-            nameLabel.textContent = name;
-            statusLabel.textContent = "Cherry Proxy established successfully.";
-            playBtn.innerHTML = '<i class="fas fa-pause"></i>';
-        }
-
-        // URL QUERY LOGIC
         window.onload = () => {
             const db = parseCSV(csvRawData);
             const params = new URLSearchParams(window.location.search);
@@ -199,18 +218,18 @@ Deep Sea,https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp
             if (target) {
                 const video = db.find(v => v.name.toLowerCase() === target.toLowerCase());
                 if (video) {
-                    startStream(video.url, video.name);
+                    initStream(video.url, video.name);
                 } else {
-                    statusLabel.textContent = "Error: Stream not found in CSV.";
+                    nameLabel.textContent = "Stream Not Found";
                     loader.classList.add('hidden');
                 }
             }
         };
 
-        // CONTROLS
+        // --- INTERACTIVITY ---
         playBtn.onclick = () => {
-            if (player.paused) { player.play(); playBtn.innerHTML = '<i class="fas fa-pause"></i>'; }
-            else { player.pause(); playBtn.innerHTML = '<i class="fas fa-play"></i>'; }
+            if (player.paused) { player.play(); playBtn.innerHTML = '<i class="fas fa-pause"></i>'; statusBadge.textContent = "Live"; }
+            else { player.pause(); playBtn.innerHTML = '<i class="fas fa-play"></i>'; statusBadge.textContent = "Paused"; }
         };
 
         muteBtn.onclick = () => {
@@ -219,13 +238,14 @@ Deep Sea,https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp
         };
 
         volIn.oninput = (e) => { player.volume = e.target.value; player.muted = false; };
-
+        
         document.getElementById('v-full').onclick = () => {
-            if (!document.fullscreenElement) document.getElementById('video-scope').requestFullscreen();
+            const scope = document.getElementById('video-scope');
+            if (!document.fullscreenElement) scope.requestFullscreen();
             else document.exitFullscreen();
         };
 
-        document.getElementById('v-pip').onclick = () => { player.requestPictureInPicture(); };
+        document.getElementById('v-pip').onclick = () => player.requestPictureInPicture();
     </script>
 </body>
 </html>
