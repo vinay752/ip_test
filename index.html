@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cherry OS - Pro Streamer</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff2d55; /* Cherry Red */
+            --bg-dark: #050505;
+            --bg-card: #121212;
+            --text-main: #ffffff;
+            --text-dim: #888888;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; padding: 20px;
+        }
+
+        .container { width: 100%; max-width: 1000px; display: flex; flex-direction: column; gap: 20px; }
+
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 0; border-bottom: 1px solid #222;
+        }
+
+        .logo-box { display: flex; align-items: center; gap: 12px; }
+        .logo-icon { color: var(--primary); font-size: 24px; text-shadow: 0 0 10px var(--primary); }
+        .logo-text { font-weight: 900; font-size: 1.4rem; letter-spacing: 1px; }
+
+        #status-badge {
+            font-size: 10px; font-weight: 800; color: var(--primary);
+            border: 1px solid var(--primary); padding: 4px 12px; border-radius: 20px;
+            text-transform: uppercase; box-shadow: 0 0 10px rgba(255, 45, 85, 0.2);
+        }
+
+        /* Player Styling */
+        .player-wrapper {
+            position: relative; background: #000; border-radius: 20px;
+            overflow: hidden; aspect-ratio: 16 / 9; width: 100%;
+            border: 1px solid #222; box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        }
+
+        video { width: 100%; height: 100%; outline: none; }
+
+        .overlay {
+            position: absolute; inset: 0; display: flex;
+            justify-content: center; align-items: center; z-index: 10;
+            background: rgba(0,0,0,0.6);
+        }
+
+        .spinner {
+            width: 50px; height: 50px; border: 3px solid rgba(255,255,255,0.1);
+            border-top: 3px solid var(--primary); border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .info-card {
+            background: var(--bg-card); padding: 25px; border-radius: 20px;
+            border: 1px solid #222; margin-top: 10px;
+        }
+
+        .video-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 5px; }
+        .video-status { font-size: 0.9rem; color: var(--text-dim); }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div class="logo-box">
+                <i class="fas fa-🍒 logo-icon"></i>
+                <h1 class="logo-text">CHERRY<span style="color:var(--primary)">PRO</span></h1>
+            </div>
+            <div id="status-badge">Awaiting Signal</div>
+        </header>
+
+        <div class="player-wrapper">
+            <video id="v-element" crossorigin="anonymous" controls playsinline></video>
+            
+            <div id="v-loader" class="overlay hidden">
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <h2 id="display-name" class="video-title">No Channel Loaded</h2>
+            <p id="display-status" class="video-status">Please select a stream from the bot results.</p>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. THE DATA VAULT ---
+        // Your CSV data stays here, hidden from the UI
+        const csvRawData = `Name,URL
+Epic Sunset,https://www.w3schools.com/html/mov_bbb.mp4
+City Lights,https://www.w3schools.com/html/movie.mp4
+Deep Sea,https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4`;
+
+        // --- 2. LOGIC ENGINE ---
+        const player = document.getElementById('v-element');
+        const loader = document.getElementById('v-loader');
+        const statusBadge = document.getElementById('status-badge');
+        const nameLabel = document.getElementById('display-name');
+        const statusLabel = document.getElementById('display-status');
+
+        function parseCSV(csv) {
+            const lines = csv.split('\n');
+            const result = [];
+            for (let i = 1; i < lines.length; i++) {
+                const parts = lines[i].split(',');
+                if (parts.length >= 2) result.push({ name: parts[0].trim(), url: parts[1].trim() });
+            }
+            return result;
+        }
+
+        function initCherryPlayer() {
+            const videoData = parseCSV(csvRawData);
+            const params = new URLSearchParams(window.location.search);
+            const targetName = params.get('name');
+
+            if (targetName) {
+                const video = videoData.find(v => v.name.toLowerCase() === targetName.toLowerCase());
+
+                if (video) {
+                    loader.classList.remove('hidden');
+                    nameLabel.textContent = video.name;
+                    statusLabel.textContent = "Establishing secure connection...";
+                    statusBadge.textContent = "LIVE";
+
+                    player.src = video.url;
+                    player.load();
+                    player.play().then(() => {
+                        loader.classList.add('hidden');
+                        statusLabel.textContent = "Stream active via Cherry Tunnel.";
+                    }).catch(() => {
+                        loader.classList.add('hidden');
+                        statusLabel.textContent = "Autoplay blocked. Tap to play.";
+                    });
+                } else {
+                    nameLabel.textContent = "Stream Not Found";
+                    statusLabel.textContent = `Error: "${targetName}" is not in the database.`;
+                    statusBadge.textContent = "OFFLINE";
+                }
+            }
+        }
+
+        window.onload = initCherryPlayer;
+    </script>
+</body>
+</html>
