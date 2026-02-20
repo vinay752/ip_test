@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>Remote Video Player</h2>
+    <video id="myPlayer" width="640" controls autoplay>
+        <source id="videoSource" src="" type="video/mp4">
+    </video>
+
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+        const video = document.getElementById('myPlayer');
+        const source = document.getElementById('videoSource');
+
+        socket.on('new_video', function(data) {
+            console.log("Updating video to:", data.url);
+            source.src = data.url;
+            video.load(); // Must call load() to refresh the source
+            video.play();
+        });
+    </script>
+</body>
+</html>
