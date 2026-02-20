@@ -228,6 +228,29 @@ run_cherry_engine()
         const statusBadge = document.getElementById('status-badge');
 
         // Called by PyScript
+        window.onload = () => {
+    // 1. Check standard URL (for laptop/browser tests)
+    const urlParams = new URLSearchParams(window.location.search);
+    let target = urlParams.get('name') || urlParams.get('startapp');
+
+    // 2. Check Telegram Hash (for the actual Telegram App)
+    if (!target && window.location.hash) {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        target = hashParams.get('tgWebAppStartParam');
+    }
+
+    if (target) {
+        const cleanName = decodeURIComponent(target);
+        // Trigger your PyScript engine
+        if (typeof run_cherry_engine === "function") {
+            run_cherry_engine(cleanName);
+        }
+    } else {
+        // No channel found, show default state
+        document.getElementById('display-name').textContent = "Ready";
+        document.getElementById('v-loader').classList.add('hidden');
+    }
+};
         async function initStream(url, name) {
             statusBadge.textContent = "Live";
             nameLabel.textContent = name;
