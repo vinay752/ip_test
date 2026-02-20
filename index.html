@@ -7,20 +7,19 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --cherry-main: #ff2d55;
-            --cherry-glow: rgba(255, 45, 85, 0.5);
-            --bg-dark: #05070a;
-            --bg-card: #0f1218;
-            --text-main: #f8fafc;
-            --text-dim: #64748b;
+            --cherry: #ff2d55;
+            --bg: #05070a;
+            --card: #0f1218;
+            --text: #f8fafc;
+            --dim: #64748b;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, sans-serif;
             display: flex; flex-direction: column; align-items: center;
             min-height: 100vh; padding: 20px;
         }
@@ -30,12 +29,12 @@
         /* Header UI */
         header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         .logo-box { display: flex; align-items: center; gap: 10px; }
-        .logo-icon { color: var(--cherry-main); font-size: 22px; text-shadow: 0 0 15px var(--cherry-main); }
+        .logo-icon { color: var(--cherry); font-size: 22px; text-shadow: 0 0 15px var(--cherry); }
         .logo-text { font-size: 1.4rem; font-weight: 900; letter-spacing: -0.02em; }
 
         #status-badge {
-            font-size: 10px; font-weight: 800; color: var(--cherry-main);
-            background: rgba(255, 45, 85, 0.1); border: 1px solid var(--cherry-main);
+            font-size: 10px; font-weight: 800; color: var(--cherry);
+            background: rgba(255, 45, 85, 0.1); border: 1px solid var(--cherry);
             padding: 4px 12px; border-radius: 20px; text-transform: uppercase;
         }
 
@@ -47,56 +46,52 @@
             box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.7);
         }
 
-        video { width: 100%; height: 100%; cursor: pointer; }
+        video { width: 100%; height: 100%; }
 
-        /* Loader & Overlays */
+        /* Overlays */
         .overlay { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; z-index: 20; background: rgba(0,0,0,0.6); }
         .hidden { display: none !important; }
 
         .spinner {
             width: 45px; height: 45px; border: 3px solid rgba(255, 255, 255, 0.1);
-            border-top: 3px solid var(--cherry-main); border-radius: 50%;
-            animation: spin 0.8s linear infinite; box-shadow: 0 0 15px var(--cherry-glow);
+            border-top: 3px solid var(--cherry); border-radius: 50%;
+            animation: spin 0.8s linear infinite;
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* Professional Controls Layer */
+        /* Pro Controls */
         .controls-layer {
             position: absolute; bottom: 0; left: 0; right: 0; padding: 20px;
             background: linear-gradient(transparent, rgba(0,0,0,0.9));
-            z-index: 30; display: flex; flex-direction: column; gap: 12px;
-            opacity: 0; transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 30; opacity: 0; transition: opacity 0.3s;
         }
         .player-wrapper:hover .controls-layer { opacity: 1; }
 
         .controls-bar {
             display: flex; justify-content: space-between; align-items: center;
-            background: rgba(15, 18, 24, 0.7); backdrop-filter: blur(15px);
-            padding: 14px 24px; border-radius: 22px; border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(15, 18, 24, 0.8); backdrop-filter: blur(10px);
+            padding: 12px 20px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .controls-left, .controls-right { display: flex; align-items: center; gap: 18px; }
+        .controls-left, .controls-right { display: flex; align-items: center; gap: 15px; }
 
-        button { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 18px; transition: 0.2s; }
-        button:hover { color: var(--cherry-main); transform: scale(1.1); }
+        button { background: none; border: none; color: var(--dim); cursor: pointer; font-size: 18px; transition: 0.2s; }
+        button:hover { color: var(--cherry); }
 
-        .live-badge { display: flex; align-items: center; gap: 8px; color: #ff4d4d; font-weight: 900; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
-        .live-dot { width: 7px; height: 7px; background: #ff4d4d; border-radius: 50%; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 1; box-shadow: 0 0 0 0 rgba(255,77,77,0.7); } 70% { opacity: 0.5; box-shadow: 0 0 0 10px rgba(255,77,77,0); } 100% { opacity: 1; } }
+        .live-badge { display: flex; align-items: center; gap: 6px; color: #ff4d4d; font-weight: 800; font-size: 11px; text-transform: uppercase; }
+        .live-dot { width: 6px; height: 6px; background: #ff4d4d; border-radius: 50%; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
-        input[type=range] { accent-color: var(--cherry-main); cursor: pointer; width: 80px; }
+        input[type=range] { accent-color: var(--cherry); cursor: pointer; width: 70px; }
 
-        /* Info Card */
+        /* Info Display */
         .info-card {
-            background-color: var(--bg-card); padding: 25px; border-radius: 28px;
+            background-color: var(--card); padding: 20px; border-radius: 25px;
             border: 1px solid rgba(255, 255, 255, 0.03); text-align: center;
         }
 
-        .video-title { font-size: 1.6rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px; }
-        .video-status { font-size: 0.95rem; color: var(--text-dim); }
-
-        /* Fullscreen Mode */
-        .pseudo-fullscreen { position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 9999 !important; border-radius: 0 !important; }
+        .video-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 5px; }
+        .video-status { font-size: 0.9rem; color: var(--dim); }
     </style>
 </head>
 <body>
@@ -104,10 +99,10 @@
     <div class="container">
         <header>
             <div class="logo-box">
-                <i class="fas fa-circle-play logo-icon"></i>
-                <h1 class="logo-text">CHERRY<span style="color:var(--cherry-main)">PRO</span></h1>
+                <i class="fas fa-cherry logo-icon"></i>
+                <h1 class="logo-text">CHERRY<span style="color:var(--cherry)">PRO</span></h1>
             </div>
-            <div id="status-badge">Tunnel Offline</div>
+            <div id="status-badge">Awaiting Query</div>
         </header>
 
         <div id="video-scope" class="player-wrapper">
@@ -115,12 +110,12 @@
 
             <div id="v-loader" class="overlay hidden"><div class="spinner"></div></div>
 
-            <div class="controls-layer" id="controls-ui">
+            <div class="controls-layer">
                 <div class="controls-bar">
                     <div class="controls-left">
                         <button id="v-play-btn"><i class="fas fa-play"></i></button>
                         <div class="live-badge"><span class="live-dot"></span>Live</div>
-                        <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="display:flex; align-items:center; gap:8px;">
                             <button id="v-mute"><i class="fas fa-volume-up"></i></button>
                             <input type="range" id="v-vol" min="0" max="1" step="0.1" value="1">
                         </div>
@@ -134,13 +129,13 @@
         </div>
 
         <div class="info-card">
-            <h2 id="display-name" class="video-title">No Stream Detected</h2>
-            <p id="display-status" class="video-status">Awaiting signal from the bot...</p>
+            <h2 id="display-name" class="video-title">No Video Loaded</h2>
+            <p id="display-status" class="video-status">Select a channel from the bot to begin.</p>
         </div>
     </div>
 
     <script>
-        // --- 1. DATA (CSV) ---
+        // --- 1. DATA ---
         const csvRawData = `Name,URL
 Epic Sunset,https://www.w3schools.com/html/mov_bbb.mp4
 City Lights,https://www.w3schools.com/html/movie.mp4
@@ -155,17 +150,35 @@ Deep Sea,https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp
         const nameLabel = document.getElementById('display-name');
         const statusLabel = document.getElementById('display-status');
         const statusBadge = document.getElementById('status-badge');
-        const scope = document.getElementById('video-scope');
 
-        // --- 3. CSV ENGINE ---
+        // --- 3. CSV PARSER ---
         function parseCSV(csv) {
             return csv.split('\n').slice(1).map(line => {
                 const parts = line.split(',');
-                return { name: parts[0].trim(), url: parts[1].trim() };
+                return { name: parts[0]?.trim(), url: parts[1]?.trim() };
             });
         }
 
-        // --- 4. PLAYER LOGIC ---
+        // --- 4. ENGINE ---
+        function loadStream(url, name) {
+            loader.classList.remove('hidden');
+            statusBadge.textContent = "Syncing";
+            
+            player.src = url;
+            player.load(); // Forces the browser to recognize the new source
+
+            player.play().then(() => {
+                loader.classList.add('hidden');
+                statusBadge.textContent = "Live";
+                statusLabel.textContent = "Cherry Tunnel established successfully.";
+                playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            }).catch(() => {
+                loader.classList.add('hidden');
+                statusLabel.textContent = "Autoplay blocked. Tap Play to start.";
+                playBtn.innerHTML = '<i class="fas fa-play"></i>';
+            });
+        }
+
         function initCherry() {
             const db = parseCSV(csvRawData);
             const params = new URLSearchParams(window.location.search);
@@ -175,28 +188,15 @@ Deep Sea,https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp
                 const video = db.find(v => v.name.toLowerCase() === target.toLowerCase());
                 if (video) {
                     nameLabel.textContent = video.name;
-                    statusLabel.textContent = "Connecting to Cherry Tunnel...";
-                    statusBadge.textContent = "LIVE";
-                    loader.classList.remove('hidden');
-
-                    player.src = video.url;
-                    player.load();
-                    player.play().then(() => {
-                        loader.classList.add('hidden');
-                        statusLabel.textContent = "Stream verified. Enjoy watching.";
-                    }).catch(() => {
-                        loader.classList.add('hidden');
-                        statusLabel.textContent = "Autoplay blocked. Click Play.";
-                        playBtn.innerHTML = '<i class="fas fa-play"></i>';
-                    });
+                    loadStream(video.url, video.name);
                 } else {
-                    nameLabel.textContent = "Unknown Stream";
-                    statusLabel.textContent = "The requested name is not in the CSV database.";
+                    nameLabel.textContent = "Stream Not Found";
+                    statusLabel.textContent = `"${target}" is missing from the CSV database.`;
                 }
             }
         }
 
-        // Controls
+        // --- 5. INTERACTION ---
         playBtn.onclick = () => {
             if (player.paused) { player.play(); playBtn.innerHTML = '<i class="fas fa-pause"></i>'; }
             else { player.pause(); playBtn.innerHTML = '<i class="fas fa-play"></i>'; }
@@ -207,10 +207,10 @@ Deep Sea,https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp
             muteBtn.innerHTML = player.muted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
         };
 
-        volIn.oninput = (e) => { player.volume = e.target.value; };
+        volIn.oninput = (e) => { player.volume = e.target.value; player.muted = false; };
 
         document.getElementById('v-full').onclick = () => {
-            if (!document.fullscreenElement) scope.requestFullscreen();
+            if (!document.fullscreenElement) document.getElementById('video-scope').requestFullscreen();
             else document.exitFullscreen();
         };
 
