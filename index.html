@@ -267,15 +267,31 @@ run_cherry_engine()
         });
 
         document.getElementById('v-full').onclick = (e) => {
-            e.stopPropagation();
-            const wrapper = document.getElementById('video-scope');
-            if (!document.fullscreenElement) {
-                if (wrapper.requestFullscreen) wrapper.requestFullscreen();
-                else if (wrapper.webkitRequestFullscreen) wrapper.webkitRequestFullscreen();
-            } else {
-                if (document.exitFullscreen) document.exitFullscreen();
-            }
-        };
+    e.stopPropagation();
+    const wrapper = document.getElementById('video-scope');
+    const video = document.getElementById('v-element');
+
+    // 1. Try to make the WHOLE player (with buttons) fullscreen
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        if (wrapper.requestFullscreen) {
+            wrapper.requestFullscreen().catch(err => {
+                // Fallback: If wrapper fails, just do the video
+                video.requestFullscreen();
+            });
+        } 
+        // 2. iOS / Safari Specific logic
+        else if (video.webkitEnterFullscreen) {
+            video.webkitEnterFullscreen();
+        } 
+        else if (wrapper.webkitRequestFullscreen) {
+            wrapper.webkitRequestFullscreen();
+        }
+    } else {
+        // Exit logic
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    }
+};
 
         document.getElementById('v-pip').onclick = (e) => {
             e.stopPropagation();
