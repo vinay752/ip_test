@@ -22,10 +22,7 @@
             --dim: #94a3b8;
         }
 
-        * { 
-            margin: 0; padding: 0; box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent; 
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
             background-color: var(--bg);
@@ -60,7 +57,11 @@
 
         video { width: 100%; height: 100%; object-fit: contain; pointer-events: auto; }
 
-        /* Loader Overlay */
+        /* Fullscreen Video Fixes */
+        video:-webkit-full-screen { width: 100%; height: 100%; }
+        .player-wrapper:fullscreen { border-radius: 0; border: none; }
+        .player-wrapper:fullscreen video { width: 100vw; height: 100vh; }
+
         .overlay { 
             position: absolute; inset: 0; display: flex; flex-direction: column; 
             justify-content: center; align-items: center; z-index: 50; 
@@ -75,7 +76,6 @@
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* Mobile Controls */
         .controls-layer {
             position: absolute; bottom: 0; left: 0; right: 0; padding: 15px;
             background: linear-gradient(transparent, rgba(0,0,0,0.9));
@@ -89,21 +89,8 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .controls-left, .controls-right { display: flex; align-items: center; gap: 18px; }
-
-        button { 
-            background: none; border: none; color: #fff; 
-            cursor: pointer; font-size: 18px; transition: 0.2s; 
-            padding: 8px;
-        }
+        button { background: none; border: none; color: #fff; cursor: pointer; font-size: 18px; padding: 8px; }
         button:active { transform: scale(0.9); color: var(--cherry); }
-
-        .live-badge { 
-            display: flex; align-items: center; gap: 6px; color: var(--cherry); 
-            font-weight: 800; font-size: 10px; text-transform: uppercase; 
-        }
-        .live-dot { width: 6px; height: 6px; background: var(--cherry); border-radius: 50%; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
         .info-card {
             background-color: var(--surface); padding: 24px; border-radius: 24px;
@@ -132,17 +119,17 @@
 
             <div id="v-loader" class="overlay">
                 <div class="spinner"></div>
-                <p id="boot-text" style="margin-top: 15px; font-size: 10px; color: var(--dim); font-weight: 700; text-transform: uppercase;">Booting Python...</p>
+                <p id="boot-text" style="margin-top: 15px; font-size: 10px; color: var(--dim); font-weight: 700; text-transform: uppercase;">Booting Engine...</p>
             </div>
 
             <div id="v-controls" class="controls-layer">
                 <div class="controls-bar">
-                    <div class="controls-left">
+                    <div class="controls-left" style="display:flex; gap:18px; align-items:center;">
                         <button id="v-play-btn"><i class="fas fa-pause"></i></button>
-                        <div class="live-badge"><span class="live-dot"></span>Live</div>
+                        <div style="color:var(--cherry); font-weight:800; font-size:10px;">LIVE</div>
                         <button id="v-mute"><i class="fas fa-volume-mute"></i></button>
                     </div>
-                    <div class="controls-right">
+                    <div class="controls-right" style="display:flex; gap:18px; align-items:center;">
                         <button id="v-pip"><i class="fas fa-clone"></i></button>
                         <button id="v-full"><i class="fas fa-expand"></i></button>
                     </div>
@@ -163,32 +150,21 @@ from pyscript import window
 import js
 
 def run_cherry_engine(target_from_js=None):
-    status_badge = window.document.getElementById('status-badge')
-    name_label = window.document.getElementById('display-name')
-    v_loader = window.document.getElementById('v-loader')
-    boot_text = window.document.getElementById('boot-text')
-
     try:
-        boot_text.textContent = "Syncing Database..."
         df = pd.read_csv(open_url("./TV.csv"))
-        
         params = window.URLSearchParams.new(window.location.search)
         target = target_from_js or params.get('startapp') or params.get('name')
 
         if target:
-            boot_text.textContent = "Fetching Link..."
             target_clean = window.decodeURIComponent(target).replace('_', ' ').strip()
             match = df[df['Name'].str.contains(target_clean, case=False, na=False)].head(1)
-            
             if not match.empty:
                 js.initStream(match['URL'].values[0], match['Name'].values[0])
             else:
-                name_label.textContent = "Channel Not Found"
-                v_loader.classList.add('hidden')
+                window.document.getElementById('display-name').textContent = "Not Found"
+                window.document.getElementById('v-loader').classList.add('hidden')
         else:
-            v_loader.classList.add('hidden')
-            name_label.textContent = "Awaiting Signal"
-
+            window.document.getElementById('v-loader').classList.add('hidden')
     except Exception as e:
         print(f"Engine Error: {e}")
 
@@ -197,7 +173,6 @@ run_cherry_engine()
     </script>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
     <script>
         const player = document.getElementById('v-element');
         const loader = document.getElementById('v-loader');
@@ -207,14 +182,12 @@ run_cherry_engine()
         const statusBadge = document.getElementById('status-badge');
         const controls = document.getElementById('v-controls');
 
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+        window.Telegram.WebApp.expand();
 
         window.onload = () => {
             const params = new URLSearchParams(window.location.search);
-            // Triple Check: Search, Startapp, or SDK
             let target = params.get('name') || params.get('startapp') || 
-                         (tg.initDataUnsafe && tg.initDataUnsafe.start_param) ||
+                         (window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.start_param) ||
                          new URLSearchParams(window.location.hash.substring(1)).get('tgWebAppStartParam');
 
             if (target) {
@@ -229,76 +202,65 @@ run_cherry_engine()
         };
 
         async function initStream(url, name) {
-            statusBadge.textContent = "Live";
             nameLabel.textContent = name.replace(/\(\d{3,4}p\)/g, '').trim();
             player.src = url;
-            
             try {
-                // To autoplay on mobile, we stay muted
                 player.muted = true;
                 await player.play();
                 loader.classList.add('hidden');
             } catch (err) {
                 loader.classList.add('hidden');
                 playBtn.innerHTML = '<i class="fas fa-play"></i>';
-                statusBadge.textContent = "Tap to Play";
             }
         }
 
-        // Mobile-ready Event Listeners
+        // --- FULLSCREEN & ROTATION MAGIC ---
+        document.getElementById('v-full').onclick = async (e) => {
+            e.stopPropagation();
+            const wrapper = document.getElementById('video-scope');
+
+            try {
+                if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                    // Enter Fullscreen
+                    if (wrapper.requestFullscreen) {
+                        await wrapper.requestFullscreen();
+                    } else if (player.webkitEnterFullscreen) {
+                        player.webkitEnterFullscreen(); // iOS native fallback
+                        return;
+                    } else if (wrapper.webkitRequestFullscreen) {
+                        await wrapper.webkitRequestFullscreen();
+                    }
+
+                    // Force Rotation (Android/Chrome)
+                    if (screen.orientation && screen.orientation.lock) {
+                        await screen.orientation.lock('landscape').catch(() => {});
+                    }
+                } else {
+                    // Exit
+                    if (document.exitFullscreen) document.exitFullscreen();
+                    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                    
+                    if (screen.orientation && screen.orientation.unlock) {
+                        screen.orientation.unlock();
+                    }
+                }
+            } catch (err) {
+                player.play(); // Last resort gesture
+            }
+        };
+
         playBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            if (player.paused) {
-                player.play();
-                playBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                statusBadge.textContent = "Live";
-            } else {
-                player.pause();
-                playBtn.innerHTML = '<i class="fas fa-play"></i>';
-                statusBadge.textContent = "Paused";
-            }
+            if (player.paused) { player.play(); playBtn.innerHTML = '<i class="fas fa-pause"></i>'; }
+            else { player.pause(); playBtn.innerHTML = '<i class="fas fa-play"></i>'; }
         });
 
         muteBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             player.muted = !player.muted;
             muteBtn.innerHTML = player.muted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
-            if (!player.muted) statusBadge.textContent = "Live";
         });
 
-        document.getElementById('v-full').onclick = (e) => {
-    e.stopPropagation();
-    const wrapper = document.getElementById('video-scope');
-    const video = document.getElementById('v-element');
-
-    // 1. Try to make the WHOLE player (with buttons) fullscreen
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        if (wrapper.requestFullscreen) {
-            wrapper.requestFullscreen().catch(err => {
-                // Fallback: If wrapper fails, just do the video
-                video.requestFullscreen();
-            });
-        } 
-        // 2. iOS / Safari Specific logic
-        else if (video.webkitEnterFullscreen) {
-            video.webkitEnterFullscreen();
-        } 
-        else if (wrapper.webkitRequestFullscreen) {
-            wrapper.webkitRequestFullscreen();
-        }
-    } else {
-        // Exit logic
-        if (document.exitFullscreen) document.exitFullscreen();
-        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-    }
-};
-
-        document.getElementById('v-pip').onclick = (e) => {
-            e.stopPropagation();
-            if (document.pictureInPictureEnabled) player.requestPictureInPicture();
-        };
-
-        // Tap video to toggle controls
         player.addEventListener('click', () => {
             controls.style.opacity = (controls.style.opacity == "0") ? "1" : "0";
         });
