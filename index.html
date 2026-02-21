@@ -25,7 +25,6 @@
         * { 
             margin: 0; padding: 0; box-sizing: border-box; 
             -webkit-tap-highlight-color: transparent; 
-            user-select: none;
         }
 
         body {
@@ -52,24 +51,21 @@
             box-shadow: 0 0 15px var(--cherry-glow);
         }
 
-        /* Responsive Player */
         .player-wrapper {
             position: relative; background: #000; border-radius: 24px;
             overflow: hidden; aspect-ratio: 16 / 9; width: 100%;
             border: 1px solid rgba(255, 255, 255, 0.08);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
-            touch-action: none;
         }
 
-        video { width: 100%; height: 100%; object-fit: contain; }
+        video { width: 100%; height: 100%; object-fit: contain; pointer-events: auto; }
 
-        /* Mobile Loader */
         .overlay { 
             position: absolute; inset: 0; display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; z-index: 20; 
+            justify-content: center; align-items: center; z-index: 50; 
             background: var(--bg); transition: opacity 0.4s ease; 
         }
-        .hidden { opacity: 0; pointer-events: none; }
+        .hidden { opacity: 0 !important; pointer-events: none !important; }
 
         .spinner {
             width: 44px; height: 44px; border: 3px solid rgba(255, 255, 255, 0.05);
@@ -78,19 +74,18 @@
         }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* Mobile-First Controls */
         .controls-layer {
             position: absolute; bottom: 0; left: 0; right: 0; padding: 15px;
             background: linear-gradient(transparent, rgba(0,0,0,0.9));
-            z-index: 30; opacity: 0; transition: opacity 0.3s;
+            z-index: 100; opacity: 1; transition: opacity 0.3s;
         }
-        .player-wrapper:hover .controls-layer, .player-wrapper:active .controls-layer { opacity: 1; }
 
         .controls-bar {
             display: flex; justify-content: space-between; align-items: center;
             background: var(--glass); backdrop-filter: blur(20px);
             padding: 10px 18px; border-radius: 18px; 
             border: 1px solid rgba(255, 255, 255, 0.1);
+            pointer-events: auto;
         }
 
         .controls-left, .controls-right { display: flex; align-items: center; gap: 18px; }
@@ -98,6 +93,7 @@
         button { 
             background: none; border: none; color: #fff; 
             cursor: pointer; font-size: 18px; transition: 0.2s; 
+            padding: 5px;
         }
         button:active { transform: scale(0.9); color: var(--cherry); }
 
@@ -108,7 +104,7 @@
         .live-dot { width: 6px; height: 6px; background: var(--cherry); border-radius: 50%; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
-        input[type=range] { accent-color: var(--cherry); width: 60px; height: 4px; }
+        input[type=range] { accent-color: var(--cherry); width: 50px; height: 4px; }
 
         .info-card {
             background-color: var(--surface); padding: 24px; border-radius: 24px;
@@ -118,7 +114,6 @@
         .video-title { font-size: 1.4rem; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.5px; }
         .video-subtitle { font-size: 10px; font-weight: 600; color: var(--dim); text-transform: uppercase; letter-spacing: 1.5px; }
 
-        /* PyScript Cleaners */
         py-script, .py-terminal, py-config { display: none !important; }
     </style>
 </head>
@@ -130,26 +125,23 @@
                 <i class="fas fa-play logo-icon"></i>
                 <h1 class="logo-text">CherryTV</h1>
             </div>
-            <div id="status-badge">Engine Core</div>
+            <div id="status-badge">Syncing</div>
         </header>
 
         <div id="video-scope" class="player-wrapper">
-            <video id="v-element" crossorigin="anonymous" playsinline autoplay></video>
+            <video id="v-element" crossorigin="anonymous" playsinline autoplay muted></video>
 
             <div id="v-loader" class="overlay">
                 <div class="spinner"></div>
                 <p id="boot-text" style="margin-top: 15px; font-size: 10px; color: var(--dim); font-weight: 700; text-transform: uppercase;">Initializing...</p>
             </div>
 
-            <div class="controls-layer">
+            <div id="v-controls" class="controls-layer">
                 <div class="controls-bar">
                     <div class="controls-left">
-                        <button id="v-play-btn"><i class="fas fa-play"></i></button>
+                        <button id="v-play-btn"><i class="fas fa-pause"></i></button>
                         <div class="live-badge"><span class="live-dot"></span>Live</div>
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <button id="v-mute"><i class="fas fa-volume-up"></i></button>
-                            <input type="range" id="v-vol" min="0" max="1" step="0.1" value="1">
-                        </div>
+                        <button id="v-mute"><i class="fas fa-volume-mute"></i></button>
                     </div>
                     <div class="controls-right">
                         <button id="v-pip"><i class="fas fa-clone"></i></button>
@@ -161,7 +153,7 @@
 
         <div class="info-card">
             <p class="video-subtitle">Currently Streaming</p>
-            <h2 id="display-name" class="video-title">...</h2>
+            <h2 id="display-name" class="video-title">Ready...</h2>
         </div>
     </div>
 
@@ -172,181 +164,114 @@ from pyscript import window
 import js
 
 def run_cherry_engine(target_from_js=None):
-    """
-    The main search engine for CherryTV. 
-    It syncs the CSV and finds the stream URL based on the channel name.
-    """
     status_badge = window.document.getElementById('status-badge')
     name_label = window.document.getElementById('display-name')
     v_loader = window.document.getElementById('v-loader')
     boot_text = window.document.getElementById('boot-text')
 
     try:
-        # Step 1: Sync the Database
-        if boot_text:
-            boot_text.textContent = "Syncing Database..."
-        
-        # Load your TV.csv (ensure this file is in your GitHub folder)
+        boot_text.textContent = "Syncing Database..."
         csv_url = "./TV.csv" 
         df = pd.read_csv(open_url(csv_url))
         
-        # Step 2: Get the Channel Name
-        # We check the JS handoff first, then fall back to URL params
         params = window.URLSearchParams.new(window.location.search)
         target = target_from_js or params.get('startapp') or params.get('name')
 
         if target:
-            if boot_text:
-                boot_text.textContent = "Searching..."
-            
-            # Clean the target name (Decode URL and fix Telegram underscores)
             target_clean = window.decodeURIComponent(target).replace('_', ' ').strip()
-            
-            # Step 3: Fast Search Logic
-            # First, try an exact match for speed
-            match = df[df['Name'] == target_clean]
-            
-            # If no exact match, try a partial match (finds "Willow TV" in "Willow TV (720p)")
-            if match.empty:
-                match = df[df['Name'].str.contains(target_clean, case=False, na=False)].head(1)
+            match = df[df['Name'].str.contains(target_clean, case=False, na=False)].head(1)
             
             if not match.empty:
-                stream_url = match['URL'].values[0]
-                stream_name = match['Name'].values[0]
-                
-                # Step 4: Hand off to Javascript Player
-                js.initStream(stream_url, stream_name)
+                js.initStream(match['URL'].values[0], match['Name'].values[0])
             else:
-                if name_label:
-                    name_label.textContent = "Channel Not Found"
-                if v_loader:
-                    v_loader.classList.add('hidden')
-                if status_badge:
-                    status_badge.textContent = "404"
-        else:
-            # Default state if no channel is requested
-            if v_loader:
+                name_label.textContent = "Not Found"
                 v_loader.classList.add('hidden')
-            if status_badge:
-                status_badge.textContent = "Ready"
+        else:
+            v_loader.classList.add('hidden')
+            status_badge.textContent = "Ready"
 
     except Exception as e:
-        if name_label:
-            name_label.textContent = "Engine Error"
-        print(f"CherryTV Python Error: {e}")
+        print(f"Error: {e}")
 
-# Expose the function to the Global JS Window so the Loader can call it
 window.run_cherry_engine = run_cherry_engine
-
-# Auto-run once on boot to catch any initial URL params
 run_cherry_engine()
-</script>
+    </script>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        const player = document.getElementById('v-element');
+        const loader = document.getElementById('v-loader');
+        const playBtn = document.getElementById('v-play-btn');
+        const muteBtn = document.getElementById('v-mute');
+        const nameLabel = document.getElementById('display-name');
+        const statusBadge = document.getElementById('status-badge');
+        const controls = document.getElementById('v-controls');
 
-<script>
-    // Global JS references
-    const player = document.getElementById('v-element');
-    const loader = document.getElementById('v-loader');
-    const playBtn = document.getElementById('v-play-btn');
-    const muteBtn = document.getElementById('v-mute');
-    const volIn = document.getElementById('v-vol');
-    const nameLabel = document.getElementById('display-name');
-    const statusBadge = document.getElementById('status-badge');
+        const tg = window.Telegram.WebApp;
+        tg.expand();
 
-    // Initialize Telegram WebApp SDK
-    const tg = window.Telegram.WebApp;
-    tg.expand(); // Opens the app to full height in Telegram
+        window.onload = () => {
+            const params = new URLSearchParams(window.location.search);
+            let target = params.get('name') || params.get('startapp') || 
+                         (tg.initDataUnsafe && tg.initDataUnsafe.start_param) ||
+                         new URLSearchParams(window.location.hash.substring(1)).get('tgWebAppStartParam');
 
-    window.onload = () => {
-        const params = new URLSearchParams(window.location.search);
-        
-        // --- THE TRIPLE CHECK ---
-        // 1. Check standard URL (?name=)
-        // 2. Check Telegram SDK (start_param)
-        // 3. Check URL Hash (#tgWebAppStartParam)
-        let target = params.get('name') || 
-                     params.get('startapp') ||
-                     (tg.initDataUnsafe && tg.initDataUnsafe.start_param) ||
-                     new URLSearchParams(window.location.hash.substring(1)).get('tgWebAppStartParam');
+            if (target) {
+                const cleanName = decodeURIComponent(target.replace(/\+/g, ' '));
+                const checkPy = setInterval(() => {
+                    if (window.run_cherry_engine) {
+                        clearInterval(checkPy);
+                        window.run_cherry_engine(cleanName);
+                    }
+                }, 100);
+            }
+        };
 
-        if (target) {
-            // Decode %20 or + into spaces
-            const cleanName = decodeURIComponent(target.replace(/\+/g, ' '));
-            
-            // Wait for PyScript to be ready before calling the engine
-            const checkPy = setInterval(() => {
-                // We check if the PyScript function is defined in the global scope
-                if (window.run_cherry_engine) {
-                    clearInterval(checkPy);
-                    window.run_cherry_engine(cleanName);
-                }
-            }, 100);
-        } else {
-            statusBadge.textContent = "Ready";
-            loader.classList.add('hidden');
-            nameLabel.textContent = "Awaiting Signal";
-        }
-    };
-
-    // Called by PyScript
-    async function initStream(url, name) {
-        statusBadge.textContent = "Live";
-        // This removes (720p) etc from the display title
-        const displayTitle = name.replace(/\(\d{3,4}p\)/g, '').trim();
-        nameLabel.textContent = displayTitle;
-        
-        player.src = url;
-        player.load();
-        
-        try {
-            await player.play();
-            loader.classList.add('hidden');
-            playBtn.innerHTML = '<i class="fas fa-pause"></i>';
-        } catch (err) {
-            loader.classList.add('hidden');
-            playBtn.innerHTML = '<i class="fas fa-play"></i>';
-            statusBadge.textContent = "Paused";
-        }
-    }
-
-    // --- MOBILE EVENT LISTENERS ---
-    playBtn.onclick = () => {
-        if (player.paused) { 
-            player.play(); 
-            playBtn.innerHTML = '<i class="fas fa-pause"></i>'; 
+        async function initStream(url, name) {
             statusBadge.textContent = "Live";
-        } else { 
-            player.pause(); 
-            playBtn.innerHTML = '<i class="fas fa-play"></i>'; 
-            statusBadge.textContent = "Paused";
+            nameLabel.textContent = name.replace(/\(\d{3,4}p\)/g, '').trim();
+            player.src = url;
+            
+            try {
+                // Mobile Autoplay requires muted
+                player.muted = true; 
+                await player.play();
+                loader.classList.add('hidden');
+            } catch (err) {
+                loader.classList.add('hidden');
+                playBtn.innerHTML = '<i class="fas fa-play"></i>';
+            }
         }
-    };
 
-    muteBtn.onclick = () => {
-        player.muted = !player.muted;
-        muteBtn.innerHTML = player.muted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
-    };
+        // Fix for Mobile Controls: Use specific event listeners
+        playBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (player.paused) {
+                player.play();
+                playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            } else {
+                player.pause();
+                playBtn.innerHTML = '<i class="fas fa-play"></i>';
+            }
+        });
 
-    volIn.oninput = (e) => { 
-        player.volume = e.target.value; 
-        if (player.volume > 0) player.muted = false;
-    };
+        muteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            player.muted = !player.muted;
+            muteBtn.innerHTML = player.muted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
+        });
 
-    document.getElementById('v-full').onclick = () => {
-        const wrapper = document.getElementById('video-scope');
-        if (!document.fullscreenElement) wrapper.requestFullscreen();
-        else document.exitFullscreen();
-    };
+        document.getElementById('v-full').onclick = (e) => {
+            e.stopPropagation();
+            const wrapper = document.getElementById('video-scope');
+            if (!document.fullscreenElement) wrapper.requestFullscreen();
+            else document.exitFullscreen();
+        };
 
-    document.getElementById('v-pip').onclick = () => {
-        if (document.pictureInPictureEnabled) player.requestPictureInPicture();
-    };
-
-    player.onclick = () => {
-        const layer = document.querySelector('.controls-layer');
-        layer.style.opacity = (layer.style.opacity == "1") ? "0" : "1";
-    };
-</script>
+        // Tap video to show/hide controls
+        player.addEventListener('click', () => {
+            controls.style.opacity = (controls.style.opacity == "0") ? "1" : "0";
+        });
+    </script>
 </body>
 </html>
