@@ -182,7 +182,7 @@ def run_cherry_engine():
         boot_text.textContent = "Syncing Database"
         
         # Load CSV
-        csv_url = "./channels.csv" 
+        csv_url = "./TV.csv" 
         df = pd.read_csv(open_url(csv_url))
         
         # Logic to handle both Browser (?name=) and Telegram Bot (?startapp=)
